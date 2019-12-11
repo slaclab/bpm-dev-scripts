@@ -22,7 +22,7 @@ class BpmStream:
     return buf
 
   def read(self, buf = None, n=0):
-    if None == buf:
+    if isinstance( buf, type(None) ):
       buf = bufAlloc(n)
     if n <= 0 or n > len(buf):
       n = len(buf)
@@ -33,19 +33,19 @@ class BpmStream:
 
   @staticmethod
   def r32(m,o):
-  return (m[o+1] << 16) + (m[o] & 0xffff)
+    return (m[o+1] << 16) + (m[o] & 0xffff)
 
   @staticmethod
   def r64(m,o):
-    return (r32(m,o+2) << 32) + (r32(m,o) & 0xffffffff)
+    return (BpmStream.r32(m,o+2) << 32) + (BpmStream.r32(m,o) & 0xffffffff)
 
   @staticmethod
   def parseMsg(msg):
-    tmit = r32( msg, 2  )   # tmit computed by firmware
+    tmit = BpmStream.r32( msg, 2  )   # tmit computed by firmware
     stat = msg[1] & 0xffff  # status word
-    x    = r32( msg, 4  )   # X computed by firmware
-    y    = r32( msg, 6  )   # Y computed by firmware
-    pid  = r64( msg, 12 )   # pulse ID
+    x    = BpmStream.r32( msg, 4  )   # X computed by firmware
+    y    = BpmStream.r32( msg, 6  )   # Y computed by firmware
+    pid  = BpmStream.r64( msg, 12 )   # pulse ID
     hoff = (((msg[0]>>4) & 0xf) + 1)*4 # Offset where waveform starts
     return pid, stat, tmit, x, y, hoff
 
@@ -54,7 +54,8 @@ class BpmStream:
     buf   = self.bufAlloc()
     nelms = self.read(buf)
     pid, stat, tmit, x, y, hoff = self.parseMsg( buf[0] )
-    return np.reshape( buf[hoff:hoff+nelms], (128, 4) )
+    print("reshaping nelms {}, hoff{}".format(nelms,hoff))
+    return np.reshape( buf[0][hoff:nelms], (128, 4) )
 
   def scn(self):
     buf = self.bufAlloc()
